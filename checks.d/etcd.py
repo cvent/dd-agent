@@ -18,6 +18,8 @@ class Etcd(AgentCheck):
 
     SERVICE_CHECK_NAME = 'etcd.can_connect'
 
+    SERVICE_HEALTHY_CHECK = 'etcd.is_healthy'
+
     STORE_RATES = {
         'getsSuccess': 'etcd.store.gets.success',
         'getsFail': 'etcd.store.gets.fail',
@@ -146,10 +148,22 @@ class Etcd(AgentCheck):
                                    followers[fol].get("latency").get(key),
                                    tags=instance_tags + ['follower:{0}'.format(fol)])
 
-        # Service check
+        # Service checks
         if self_response is not None and store_response is not None:
             self.service_check(self.SERVICE_CHECK_NAME, AgentCheck.OK,
                                tags=["url:{0}".format(url)])
+
+        is_healthy = self._get_health_status(url, ssl_params, timeout)
+        self.service_check(self.SERVICE_HEALTHY_CHECK,
+                               AgentCheck.OK if is_healthy else AgentCheck.CRITIAL,
+                               tags=["url:{0}".format(url)])
+
+    def _get_health_status(self, url, ssl_params, timeout):
+        healthy_response = self._get_json(url + "/health",  ssl_params, timeout)
+        if healthy_response is not None:
+            return healthy_response.get("health") == "true"
+        else:
+            return false
 
     def _get_self_metrics(self, url, ssl_params, timeout):
         return self._get_json(url + "/v2/stats/self",  ssl_params, timeout)
