@@ -22,7 +22,7 @@ psutil==3.3.0
 
 # checks.d/snmp.py
 # Require a compiler because pycrypto is a dep
-pysnmp-mibs==0.1.4
+pysnmp-mibs==0.1.6
 pysnmp==4.2.5
 
 # checks.d/mongo.py
